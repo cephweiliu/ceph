@@ -263,8 +263,8 @@ def run_section_cmds(ctx, cclient, section_cmd, special,
 
     auth_section = [
         ( 'os-token', 'ADMIN' ),
-        ( 'os-url', 'http://{host}:{port}/v2.0'.format(host=admin_host,
-                                                       port=admin_port) ),
+        ( 'os-url', 'http://{host}:{port}/v3'.format(host=admin_host,
+                                                     port=admin_port) ),
     ]
 
     for section_item in section_config_list:
@@ -286,20 +286,22 @@ def fill_keystone(ctx, config):
 
     for (cclient, cconfig) in config.items():
         # configure tenants/projects
-        run_section_cmds(ctx, cclient, 'project create', 'name',
+        run_section_cmds(ctx, cclient, 'domain create', 'name',
+                         cconfig['domain'])
+        run_section_cmds(ctx, cclient, 'project create --domain default', 'name',
                          cconfig['tenants'])
-        run_section_cmds(ctx, cclient, 'user create', 'name',
+        run_section_cmds(ctx, cclient, 'user create --domain default', 'name',
                          cconfig['users'])
         run_section_cmds(ctx, cclient, 'role create', 'name',
                          cconfig['roles'])
         run_section_cmds(ctx, cclient, 'role add', 'name',
                          cconfig['role-mappings'])
-        run_section_cmds(ctx, cclient, 'service create', 'name',
+        run_section_cmds(ctx, cclient, 'service create', 'type',
                          cconfig['services'])
 
         public_host, public_port = ctx.keystone.public_endpoints[cclient]
-        url = 'http://{host}:{port}/v2.0'.format(host=public_host,
-                                                 port=public_port)
+        url = 'http://{host}:{port}/v3'.format(host=public_host,
+                                               port=public_port)
         create_endpoint(ctx, cclient, 'keystone', url)
         # for the deferred endpoint creation; currently it's used in rgw.py
         ctx.keystone.create_endpoint = create_endpoint
